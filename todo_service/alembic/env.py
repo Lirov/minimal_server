@@ -1,9 +1,12 @@
+import sys, pathlib
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))  
+
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 from sqlmodel import SQLModel
 from app.core.config import settings
-from app.services.models import *  # import your SQLModel models
+from app.models import Todo
 
 config = context.config
 if not config.get_main_option("sqlalchemy.url"):
