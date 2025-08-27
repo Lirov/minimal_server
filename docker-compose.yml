@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  auth_service:
+    build: ./auth_service
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret}
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+    ports:
+      - "8001:8001"
+  todo_service:
+    build: ./todo_service
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret}
+    ports:
+      - "8002:8002"
