@@ -58,35 +58,39 @@ jobs:
       # -------- auth_service --------
       - name: Build auth_service image
         run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker build \
             --file auth_service/Dockerfile \
-            --tag ghcr.io/${{ github.repository }}-auth:latest \
+            --tag ghcr.io/${REPO_NAME}-auth:latest \
             auth_service
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            docker tag ghcr.io/${{ github.repository }}-auth:latest ghcr.io/${{ github.repository }}-auth:${{ github.ref_name }}
+            docker tag ghcr.io/${REPO_NAME}-auth:latest ghcr.io/${REPO_NAME}-auth:${{ github.ref_name }}
           fi
 
       - name: Push auth_service image
         run: |
-          docker push ghcr.io/${{ github.repository }}-auth:latest
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker push ghcr.io/${REPO_NAME}-auth:latest
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            docker push ghcr.io/${{ github.repository }}-auth:${{ github.ref_name }}
+            docker push ghcr.io/${REPO_NAME}-auth:${{ github.ref_name }}
           fi
 
       # -------- todo_service --------
       - name: Build todo_service image
         run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker build \
             --file todo_service/Dockerfile \
-            --tag ghcr.io/${{ github.repository }}-todo:latest \
+            --tag ghcr.io/${REPO_NAME}-todo:latest \
             todo_service
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            docker tag ghcr.io/${{ github.repository }}-todo:latest ghcr.io/${{ github.repository }}-todo:${{ github.ref_name }}
+            docker tag ghcr.io/${REPO_NAME}-todo:latest ghcr.io/${REPO_NAME}-todo:${{ github.ref_name }}
           fi
 
       - name: Push todo_service image
         run: |
-          docker push ghcr.io/${{ github.repository }}-todo:latest
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker push ghcr.io/${REPO_NAME}-todo:latest
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            docker push ghcr.io/${{ github.repository }}-todo:${{ github.ref_name }}
+            docker push ghcr.io/${REPO_NAME}-todo:${{ github.ref_name }}
           fi
