@@ -1,0 +1,89 @@
+name: CI/CD
+
+'on':
+  push:
+    branches: [ main, master ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  tests:
+    name: Unit tests (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [auth_service, todo_service]
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: ${{ matrix.service }}/requirements.txt
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run pytest (SQLite / in-memory)
+        run: pytest -q
+
+  docker:
+    name: Build & Push images to GHCR
+    runs-on: ubuntu-latest
+    needs: [tests]
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # -------- auth_service --------
+      - name: Build auth_service image
+        run: |
+          docker build \
+            --file auth_service/Dockerfile \
+            --tag ghcr.io/${{ github.repository }}-auth:latest \
+            auth_service
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker tag ghcr.io/${{ github.repository }}-auth:latest ghcr.io/${{ github.repository }}-auth:${{ github.ref_name }}
+          fi
+
+      - name: Push auth_service image
+        run: |
+          docker push ghcr.io/${{ github.repository }}-auth:latest
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker push ghcr.io/${{ github.repository }}-auth:${{ github.ref_name }}
+          fi
+
+      # -------- todo_service --------
+      - name: Build todo_service image
+        run: |
+          docker build \
+            --file todo_service/Dockerfile \
+            --tag ghcr.io/${{ github.repository }}-todo:latest \
+            todo_service
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker tag ghcr.io/${{ github.repository }}-todo:latest ghcr.io/${{ github.repository }}-todo:${{ github.ref_name }}
+          fi
+
+      - name: Push todo_service image
+        run: |
+          docker push ghcr.io/${{ github.repository }}-todo:latest
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker push ghcr.io/${{ github.repository }}-todo:${{ github.ref_name }}
+          fi
