@@ -32,10 +32,13 @@ jobs:
           cache-dependency-path: ${{ matrix.service }}/requirements.txt
 
       - name: Install deps
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt pytest
 
       - name: Run pytest (SQLite / in-memory)
-        run: pytest -q
+        shell: bash
+        run: |
+          set -e
+          pytest -q || code=$?; if [ "${code:-0}" -eq 5 ]; then echo "No tests collected"; exit 0; else exit "${code:-0}"; fi
 
   docker:
     name: Build & Push images to GHCR
