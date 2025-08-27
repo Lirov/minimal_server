@@ -9,3 +9,6 @@ alembic==1.13.2
 sqlmodel==0.0.22
 SQLAlchemy==2.0.32
 psycopg2-binary==2.9.9
+pytest==8.3.2
+pytest-cov==5.0.0
+

@@ -34,11 +34,18 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt pytest
 
-      - name: Run pytest (SQLite / in-memory)
+      - name: Run pytest with coverage
         shell: bash
         run: |
           set -e
-          pytest -q || code=$?; if [ "${code:-0}" -eq 5 ]; then echo "No tests collected"; exit 0; else exit "${code:-0}"; fi
+          pytest --cov=app --cov-report=xml --cov-report=term-missing || code=$?; if [ "${code:-0}" -eq 5 ]; then echo "No tests collected"; exit 0; else exit "${code:-0}"; fi
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}-coverage
 
   docker:
     name: Build & Push images to GHCR
