@@ -8,6 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY main.py ./
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 
 EXPOSE 8001
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["alembic", "upgrade", "head", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]

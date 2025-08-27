@@ -1,15 +1,65 @@
 version: "3.8"
 services:
+
+    # --- DATA: separate DB per service ---
+  auth_db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${AUTH_POSTGRES_DB:-authdb}
+    ports:
+      - "5433:5432" 
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  todo_db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${TODO_POSTGRES_DB:-tododb}
+    ports:
+      - "5434:5432"     # optional: connect from host -> todo DB
+    volumes:
+      - todo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+    # --- SERVICES ---
   auth_service:
     build: ./auth_service
+    depends_on:
+      auth_db:
+        condition: service_healthy
     environment:
       SECRET_KEY: ${SECRET_KEY:-dev-secret}
-      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      # internal container-to-container URL:
+      DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql+psycopg2://app:app@auth_db:5432/authdb}
     ports:
       - "8001:8001"
+
   todo_service:
     build: ./todo_service
+    depends_on:
+      todo_db:
+        condition: service_healthy
     environment:
       SECRET_KEY: ${SECRET_KEY:-dev-secret}
+      # internal container-to-container URL:
+      DATABASE_URL: ${TODO_DATABASE_URL:-postgresql+psycopg2://app:app@todo_db:5432/tododb}
     ports:
       - "8002:8002"
+
+volumes:
+  auth_pgdata:
+  todo_pgdata:
